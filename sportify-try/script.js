@@ -1,5 +1,7 @@
 const songsEl = document.getElementById("songs");
 const recentEl = document.getElementById("recent");
+const albumsEl = document.getElementById("albums");
+
 const audio = document.getElementById("audio");
 const coverEl = document.getElementById("cover");
 const titleEl = document.getElementById("title");
@@ -9,6 +11,7 @@ const currentEl = document.getElementById("current");
 const totalEl = document.getElementById("total");
 
 let songs = [];
+let albums = [];
 let currentIndex = 0;
 let isPlaying = false;
 
@@ -18,7 +21,13 @@ fetch("songs.json")
   .then(data => {
     songs = data;
     renderSongs();
-    renderRecentlyPlayed();
+  });
+
+/* LOAD ALBUMS */
+fetch("albums.json")
+  .then(r => r.json())
+  .then(data => {
+    albums = data;
   });
 
 /* SEARCH */
@@ -32,7 +41,7 @@ function handleSearch() {
   }
 
   const filtered = songs.filter(s =>
-    s.title.toLowerCase().startsWith(q)
+    s.title.toLowerCase().includes(q)
   );
 
   renderFiltered(filtered);
@@ -40,49 +49,73 @@ function handleSearch() {
 
 function renderFiltered(list) {
   songsEl.innerHTML = "";
-  if (!list.length) {
-    songsEl.innerHTML = "<p>No songs found</p>";
-    return;
-  }
-
   list.forEach(song => {
     const i = songs.indexOf(song);
     songsEl.appendChild(songCard(song, i));
   });
 }
 
-/* TOP SONGS (7 DAYS) */
+/* RENDER SONGS */
 function renderSongs() {
   songsEl.innerHTML = "";
-
-  let list = getTop7Days(5);
-  if (!list.length) list = shuffle([...songs]).slice(0, 5);
-  list = shuffle(list);
-
-  list.forEach(song => {
-    const i = songs.indexOf(song);
+  songs.forEach((song, i) => {
     songsEl.appendChild(songCard(song, i));
   });
 }
 
-function getTop7Days(limit) {
-  const stats = JSON.parse(localStorage.getItem("stats"));
-  if (!stats || !stats.history) return [];
+/* TOP 5 ALBUMS */
+function renderTopAlbums() {
+  albumsEl.innerHTML = "";
 
-  const now = Date.now();
-  const week = 7 * 86400000;
-  const count = {};
+  const stats = getStats();
+  if (!stats.history.length) return;
+
+  const albumCount = {};
 
   stats.history.forEach(h => {
-    if (now - new Date(h.time) <= week)
-      count[h.song] = (count[h.song] || 0) + 1;
+    const song = songs.find(s => s.title === h.song);
+    if (!song) return;
+
+    const album = albums.find(a =>
+      a.songs.includes(song.id)
+    );
+    if (!album) return;
+
+    albumCount[album.id] =
+      (albumCount[album.id] || 0) + 1;
   });
 
-  return Object.entries(count)
+  const top = Object.entries(albumCount)
     .sort((a, b) => b[1] - a[1])
-    .slice(0, limit)
-    .map(([t]) => songs.find(s => s.title === t))
-    .filter(Boolean);
+    .slice(0, 5);
+
+  top.forEach(([albumId]) => {
+    const album = albums.find(a => a.id === albumId);
+
+    const div = document.createElement("div");
+    div.className = "album-card";
+    div.innerHTML = `
+      <img src="${album.cover}">
+      <h4>${album.name}</h4>
+      <p>${album.artist}</p>
+    `;
+
+    div.onclick = () => openAlbum(album);
+    albumsEl.appendChild(div);
+  });
+}
+
+/* OPEN ALBUM */
+function openAlbum(album) {
+  songsEl.innerHTML = "";
+
+  album.songs.forEach(songId => {
+    const song = songs.find(s => s.id === songId);
+    if (!song) return;
+
+    const i = songs.indexOf(song);
+    songsEl.appendChild(songCard(song, i));
+  });
 }
 
 /* PLAYER */
@@ -90,7 +123,7 @@ function playSong(i) {
   currentIndex = i;
   const s = songs[i];
 
-  audio.src = s.audio;
+  audio.src = `songs/${s.id}/audio.mp3`;
   coverEl.src = `songs/${s.id}/cover.jpg`;
   titleEl.textContent = s.title;
   artistEl.textContent = s.artist;
@@ -100,6 +133,7 @@ function playSong(i) {
 
   updateStats(s);
   renderRecentlyPlayed();
+  renderTopAlbums();
 }
 
 function togglePlay() {
@@ -118,8 +152,10 @@ function prevSong() {
 /* PROGRESS */
 audio.addEventListener("timeupdate", () => {
   if (!audio.duration) return;
+
   fillEl.style.width =
     (audio.currentTime / audio.duration) * 100 + "%";
+
   currentEl.textContent = format(audio.currentTime);
   totalEl.textContent = format(audio.duration);
 });
@@ -133,9 +169,7 @@ function seek(e) {
 /* RECENTLY PLAYED */
 function renderRecentlyPlayed() {
   recentEl.innerHTML = "";
-  const stats = JSON.parse(localStorage.getItem("stats"));
-  if (!stats || !stats.history) return;
-
+  const stats = getStats();
   const seen = new Set();
 
   stats.history.slice().reverse()
@@ -173,17 +207,12 @@ function updateStats(song) {
   const stats = getStats();
   stats.history.push({
     song: song.title,
-    artist: song.artist,
     time: new Date().toISOString()
   });
   localStorage.setItem("stats", JSON.stringify(stats));
 }
 
 /* UTIL */
-function shuffle(a) {
-  return a.sort(() => Math.random() - 0.5);
-}
-
 function format(sec) {
   const m = Math.floor(sec / 60);
   const s = Math.floor(sec % 60);
@@ -205,9 +234,9 @@ function songCard(song, i) {
 function resetData() {
   localStorage.clear();
   renderRecentlyPlayed();
+  renderTopAlbums();
 }
 
 function showWrapped() {
   alert("Wrapped coming soon 🔥");
 }
-
