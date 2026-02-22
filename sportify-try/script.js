@@ -123,7 +123,7 @@ function playSong(i) {
   currentIndex = i;
   const s = songs[i];
 
-  audio.src = `songs/${s.id}/audio.mp3`;
+  audio.src = s.audio;
   coverEl.src = `songs/${s.id}/cover.jpg`;
   titleEl.textContent = s.title;
   artistEl.textContent = s.artist;
@@ -240,3 +240,4 @@ function resetData() {
 function showWrapped() {
   alert("Wrapped coming soon 🔥");
 }
+
