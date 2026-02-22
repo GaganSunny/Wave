@@ -17,34 +17,30 @@
   </aside>
 
   <main class="main">
-  <div class="mobile-header">
-  <span>🎧 Wave</span>
-</div>
 
-    <!-- SEARCH -->
-    <div class="search-box">
-      <input
-        id="searchInput"
-        placeholder="Search songs..."
-        onkeyup="handleSearch()"
-      >
+    <div class="mobile-header">
+      <span>🎧 Wave</span>
     </div>
 
-    <!-- RECENT -->
+    <div class="search-box">
+      <input id="searchInput"
+        placeholder="Search songs..."
+        onkeyup="handleSearch()">
+    </div>
+
     <h2>🕒 Recently Played</h2>
     <div class="recent-row" id="recent"></div>
 
-    <!-- SONGS -->
+    <h2>💿 Top Albums</h2>
+    <div class="grid" id="albums"></div>
+
     <h2>🎵 Songs</h2>
     <div class="grid" id="songs"></div>
 
   </main>
-
 </div>
 
-<!-- PLAYER -->
 <div class="player">
-
   <div class="player-left">
     <img id="cover">
     <div>
@@ -66,7 +62,6 @@
       <span id="total">0:00</span>
     </div>
   </div>
-
 </div>
 
 <audio id="audio"></audio>
