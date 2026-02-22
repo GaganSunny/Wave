@@ -305,6 +305,37 @@ body {
   }
 }
 
+.album-card {
+  background: #181818;
+  padding: 16px;
+  border-radius: 16px;
+  cursor: pointer;
+  transition: transform 0.2s, background 0.2s;
+  text-align: center;
+}
+
+.album-card:hover {
+  background: #222;
+  transform: translateY(-4px);
+}
+
+.album-card img {
+  width: 100%;
+  aspect-ratio: 1/1;
+  object-fit: cover;
+  border-radius: 12px;
+}
+
+.album-card h4 {
+  margin-top: 10px;
+  font-size: 15px;
+}
+
+.album-card p {
+  font-size: 13px;
+  color: #aaa;
+}
+
 /* =====================
    📱 SMALL PHONES
 ===================== */
@@ -323,3 +354,4 @@ body {
     grid-auto-columns: minmax(90%, 1fr);
   }
 }
+
